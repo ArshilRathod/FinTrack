@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+.DS_Store
+Archive.zip
+coverage/
+*-error.log
+*-debug.log
+.npm/
+node_modules/
+*.zip
+.env
+node_modules/
+*.zip
+.env

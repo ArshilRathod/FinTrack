@@ -1,0 +1,179 @@
+{
+  "users": [
+    {
+      "id": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "name": "Arshil Rathod",
+      "email": "arshilrathod8140@gmail.com",
+      "password": "$2a$10$UhOVV0FN6h8Wi.Q9GPu5AOkKPuEaAGwCht7njJ.AmAV/RqqoZoNkC",
+      "firstName": "Arshil",
+      "lastName": "Rathod",
+      "phone": "",
+      "bio": "",
+      "gender": "Prefer not to say",
+      "dob": "",
+      "city": "",
+      "state": "",
+      "country": "",
+      "photoUrl": "",
+      "monthlyIncome": 85000,
+      "savingsGoal": 20000,
+      "riskPreference": "Balanced",
+      "createdAt": "2026-03-20T17:27:18.855Z",
+      "updatedAt": "2026-03-20T17:27:18.855Z"
+    }
+  ],
+  "expenses": [
+    {
+      "_id": "7a57df88-253c-42b3-810a-0d672c723202",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "amount": 420,
+      "category": "Food",
+      "date": "2026-03-19T17:27:18.856Z",
+      "paymentMethod": "UPI",
+      "notes": "Lunch and coffee",
+      "createdAt": "2026-03-20T17:27:18.856Z",
+      "updatedAt": "2026-03-20T17:27:18.856Z"
+    },
+    {
+      "_id": "edbdbf75-fab1-4c36-858a-6bf87a397ae1",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "amount": 1850,
+      "category": "Bills",
+      "date": "2026-03-17T17:27:18.856Z",
+      "paymentMethod": "Net Banking",
+      "notes": "Electricity bill",
+      "createdAt": "2026-03-20T17:27:18.856Z",
+      "updatedAt": "2026-03-20T17:27:18.856Z"
+    },
+    {
+      "_id": "ddd7c0f5-e3d7-46fa-8e39-e78edf74058d",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "amount": 760,
+      "category": "Travel",
+      "date": "2026-03-16T17:27:18.856Z",
+      "paymentMethod": "UPI",
+      "notes": "Cab rides",
+      "createdAt": "2026-03-20T17:27:18.856Z",
+      "updatedAt": "2026-03-20T17:27:18.856Z"
+    },
+    {
+      "_id": "1b190978-a49a-42e4-a24a-524c2c711fa7",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "amount": 2600,
+      "category": "Shopping",
+      "date": "2026-03-13T17:27:18.856Z",
+      "paymentMethod": "Credit Card",
+      "notes": "Work essentials",
+      "createdAt": "2026-03-20T17:27:18.856Z",
+      "updatedAt": "2026-03-20T17:27:18.856Z"
+    },
+    {
+      "_id": "5d776e6f-ec19-4856-a1d2-fb29abb9af41",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "amount": 980,
+      "category": "Food",
+      "date": "2026-03-10T17:27:18.856Z",
+      "paymentMethod": "Debit Card",
+      "notes": "Dinner outing",
+      "createdAt": "2026-03-20T17:27:18.856Z",
+      "updatedAt": "2026-03-20T17:27:18.856Z"
+    },
+    {
+      "_id": "ff9a1bd7-d45b-4c76-a566-c8f8b904e06c",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "amount": 540,
+      "category": "Others",
+      "date": "2026-03-08T17:27:18.856Z",
+      "paymentMethod": "Cash",
+      "notes": "Subscriptions",
+      "createdAt": "2026-03-20T17:27:18.856Z",
+      "updatedAt": "2026-03-20T17:27:18.856Z"
+    },
+    {
+      "_id": "fe7e89d1-db60-46dd-a583-99765df25481",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "amount": 2200,
+      "category": "Bills",
+      "date": "2026-03-03T17:27:18.856Z",
+      "paymentMethod": "Net Banking",
+      "notes": "Internet + mobile",
+      "createdAt": "2026-03-20T17:27:18.856Z",
+      "updatedAt": "2026-03-20T17:27:18.856Z"
+    },
+    {
+      "_id": "8e5eaee2-86e6-42a3-bb70-88e1a55c20fc",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "amount": 1300,
+      "category": "Travel",
+      "date": "2026-02-26T17:27:18.856Z",
+      "paymentMethod": "UPI",
+      "notes": "Weekend trip fuel",
+      "createdAt": "2026-03-20T17:27:18.856Z",
+      "updatedAt": "2026-03-20T17:27:18.856Z"
+    }
+  ],
+  "loans": [
+    {
+      "_id": "023421ab-5f5e-469b-a995-be6f47ec75b4",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "loanName": "Car Loan",
+      "loanAmount": 450000,
+      "interestRate": 9.2,
+      "tenure": 60,
+      "emiAmount": 9350,
+      "nextEmiDate": "2026-03-26T17:27:18.857Z",
+      "amountPaid": 112200,
+      "createdAt": "2026-03-20T17:27:18.857Z",
+      "updatedAt": "2026-03-20T17:27:18.857Z"
+    },
+    {
+      "_id": "b861c237-0aa5-4e0a-b232-675cfd4f1cd1",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "loanName": "Laptop EMI",
+      "loanAmount": 120000,
+      "interestRate": 13.4,
+      "tenure": 18,
+      "emiAmount": 7600,
+      "nextEmiDate": "2026-04-01T17:27:18.857Z",
+      "amountPaid": 45600,
+      "createdAt": "2026-03-20T17:27:18.857Z",
+      "updatedAt": "2026-03-20T17:27:18.857Z"
+    }
+  ],
+  "settings": [
+    {
+      "_id": "e744ed1f-dd17-4238-8796-b70d4aecdd3d",
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "darkMode": false,
+      "currency": "INR",
+      "region": "India",
+      "notifications": true,
+      "budgetAlerts": true,
+      "billPaymentReminders": true,
+      "largeTransactionAlerts": true,
+      "weeklySpendingSummary": true,
+      "monthlyFinancialReport": true,
+      "automaticCategorizationRules": true,
+      "recurringTransactionSetup": true,
+      "autoBudgetAllocation": false,
+      "exportFormat": "CSV",
+      "createdAt": "2026-03-20T17:27:18.857Z",
+      "updatedAt": "2026-03-20T17:27:18.857Z"
+    }
+  ],
+  "recurringPayments": [
+    {
+      "_id": "06b85449-e374-4317-b8f2-6d145f254896",
+      "title": "Netflix",
+      "amount": 500,
+      "frequency": "Monthly",
+      "nextPaymentDate": "2026-03-21",
+      "category": "Other",
+      "showOnHome": true,
+      "reminderDaysBefore": 3,
+      "user": "2bd3004b-03ae-4e96-9ce9-63164c16c265",
+      "createdAt": "2026-03-20T17:44:22.039Z",
+      "updatedAt": "2026-03-20T17:46:21.367Z"
+    }
+  ]
+}

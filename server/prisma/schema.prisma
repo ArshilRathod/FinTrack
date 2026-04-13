@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+model User {
+  id             String             @id @default(uuid()) @db.Uuid
+  name           String
+  email          String             @unique
+  password       String?
+  firstName      String
+  lastName       String
+  phone          String             @default("")
+  bio            String             @default("")
+  gender         String             @default("Prefer not to say")
+  dob            String             @default("")
+  city           String             @default("")
+  state          String             @default("")
+  country        String             @default("")
+  photoUrl       String             @default("")
+  monthlyIncome  Int                @default(85000)
+  savingsGoal    Int                @default(20000)
+  riskPreference String             @default("Balanced")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  expenses       Expense[]
+  loans          Loan[]
+  settings       Setting?
+  recurringPayments RecurringPayment[]
+  financeDiaries    FinanceDiary[]
+}
+
+model Expense {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  diaryId       String?  @db.Uuid
+  diary         FinanceDiary? @relation(fields: [diaryId], references: [id], onDelete: SetNull)
+  amount        Float
+  category      String
+  date          DateTime
+  paymentMethod String
+  notes         String   @default("")
+  optionalNote  String   @default("")
+  involvedMembers Json?
+  memberPayments Json?
+  isPaid        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId, date])
+}
+
+model Loan {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         String   @default("loan")
+  loanName     String
+  loanAmount   Float
+  interestRate Float
+  tenure       Int
+  emiAmount    Float
+  nextEmiDate  DateTime
+  startDate    DateTime?
+  amountPaid   Float    @default(0)
+  currentValue Float?
+  status       String   @default("Active")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, type, nextEmiDate])
+}
+
+model Setting {
+  id                           String   @id @default(uuid()) @db.Uuid
+  userId                       String   @unique @db.Uuid
+  user                         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  darkMode                     Boolean  @default(false)
+  currency                     String   @default("INR")
+  region                       String   @default("India")
+  notifications                Boolean  @default(true)
+  budgetAlerts                 Boolean  @default(true)
+  billPaymentReminders         Boolean  @default(true)
+  largeTransactionAlerts       Boolean  @default(true)
+  weeklySpendingSummary        Boolean  @default(true)
+  monthlyFinancialReport       Boolean  @default(true)
+  automaticCategorizationRules Boolean  @default(true)
+  recurringTransactionSetup    Boolean  @default(true)
+  autoBudgetAllocation         Boolean  @default(false)
+  exportFormat                 String   @default("CSV")
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+}
+
+model RecurringPayment {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @db.Uuid
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title              String
+  category           String   @default("Other")
+  amount             Float
+  frequency          String   @default("Monthly")
+  nextPaymentDate    DateTime
+  autopay            Boolean  @default(false)
+  reminderDaysBefore Int      @default(3)
+  notes              String   @default("")
+  showOnHome         Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId, nextPaymentDate])
+}
+
+model FinanceDiary {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  members   String[]  @default([])
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+}

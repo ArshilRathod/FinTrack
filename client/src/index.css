@@ -1,0 +1,247 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Great+Vibes&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #0f172a;
+  background:
+    linear-gradient(12deg, rgba(255, 255, 255, 0.7) 0 0) 12% 78% / 140px 140px no-repeat,
+    linear-gradient(12deg, rgba(241, 245, 249, 0.8) 0 0) 70% 18% / 120px 120px no-repeat,
+    radial-gradient(1200px 720px at 8% 18%, rgba(247, 229, 206, 0.85) 0%, transparent 60%),
+    radial-gradient(900px 620px at 78% 16%, rgba(208, 231, 244, 0.75) 0%, transparent 62%),
+    radial-gradient(1100px 820px at 86% 88%, rgba(226, 232, 240, 0.9) 0%, transparent 70%),
+    linear-gradient(115deg, rgba(217, 193, 200, 0.55) 0%, rgba(217, 193, 200, 0.55) 38%, transparent 52%),
+    repeating-linear-gradient(45deg, rgba(148, 163, 184, 0.08) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(-45deg, rgba(148, 163, 184, 0.08) 0 1px, transparent 1px 28px),
+    linear-gradient(165deg, #f6f7f9 0%, #eef1f5 45%, #e5e9f0 100%);
+  background-position:
+    center,
+    center,
+    center,
+    center,
+    center,
+    70% 88%,
+    top right,
+    top right,
+    center;
+  background-size:
+    auto,
+    auto,
+    auto,
+    auto,
+    auto,
+    900px 420px,
+    auto,
+    auto,
+    auto;
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    repeat,
+    repeat,
+    no-repeat;
+  background-attachment: fixed;
+  transition: color 0.35s ease, background 0.8s ease;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: 'Manrope', ui-sans-serif, system-ui;
+  color: #0f172a;
+  background: transparent;
+  transition: color 0.35s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.dark {
+  color: #e2e8f0;
+  background:
+    linear-gradient(12deg, rgba(15, 23, 42, 0.7) 0 0) 12% 78% / 140px 140px no-repeat,
+    linear-gradient(12deg, rgba(30, 41, 59, 0.7) 0 0) 70% 18% / 120px 120px no-repeat,
+    radial-gradient(1200px 720px at 8% 18%, rgba(56, 189, 248, 0.18) 0%, transparent 60%),
+    radial-gradient(900px 620px at 78% 16%, rgba(45, 212, 191, 0.16) 0%, transparent 62%),
+    radial-gradient(1100px 820px at 86% 88%, rgba(2, 6, 23, 0.95) 0%, transparent 70%),
+    linear-gradient(115deg, rgba(71, 85, 105, 0.35) 0%, rgba(71, 85, 105, 0.35) 38%, transparent 52%),
+    repeating-linear-gradient(45deg, rgba(148, 163, 184, 0.05) 0 1px, transparent 1px 28px),
+    repeating-linear-gradient(-45deg, rgba(148, 163, 184, 0.05) 0 1px, transparent 1px 28px),
+    linear-gradient(165deg, #0b1220 0%, #0f172a 45%, #0b1424 100%);
+  background-position:
+    center,
+    center,
+    center,
+    center,
+    center,
+    70% 88%,
+    top right,
+    top right,
+    center;
+  background-size:
+    auto,
+    auto,
+    auto,
+    auto,
+    auto,
+    900px 420px,
+    auto,
+    auto,
+    auto;
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    repeat,
+    repeat,
+    no-repeat;
+  background-attachment: fixed;
+  transition: color 0.35s ease, background 0.8s ease;
+}
+
+.dark body {
+  color: #e2e8f0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  :root,
+  .dark,
+  body {
+    transition: none;
+  }
+}
+
+/* Light mode: keep colored text neutral to match the theme */
+html:not(.dark) .text-accent:not([class*="text-white"]),
+html:not(.dark) [class*="text-emerald-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-rose-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-amber-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-sky-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-blue-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-cyan-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-indigo-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-violet-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-purple-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-fuchsia-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-pink-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-red-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-orange-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-yellow-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-lime-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-green-"]:not([class*="text-white"]),
+html:not(.dark) [class*="text-teal-"]:not([class*="text-white"]) {
+  color: #0f172a !important;
+}
+
+.welcome-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: welcomeWordIn 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.welcome-line {
+  display: block;
+}
+
+.welcome-screen {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.95), transparent 18%),
+    radial-gradient(circle at 76% 20%, rgba(244, 244, 245, 0.92), transparent 20%),
+    radial-gradient(circle at 50% 82%, rgba(226, 232, 240, 0.84), transparent 24%),
+    linear-gradient(135deg, #ffffff 0%, #f7f7f8 38%, #eef2f7 68%, #ffffff 100%);
+}
+
+.dark .welcome-screen {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(15, 23, 42, 0.95), transparent 20%),
+    radial-gradient(circle at 76% 20%, rgba(30, 41, 59, 0.92), transparent 22%),
+    radial-gradient(circle at 50% 82%, rgba(2, 6, 23, 0.9), transparent 28%),
+    linear-gradient(135deg, #0b1220 0%, #0f172a 38%, #111827 68%, #0b1220 100%);
+}
+
+.welcome-screen__blur {
+  position: absolute;
+  inset: auto;
+  filter: blur(70px);
+  opacity: 0.8;
+  transform: translateZ(0);
+}
+
+.welcome-screen__blur--one {
+  top: -8%;
+  left: -10%;
+  width: 28rem;
+  height: 28rem;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.dark .welcome-screen__blur--one {
+  background: rgba(30, 41, 59, 0.85);
+}
+
+.welcome-screen__blur--two {
+  top: 12%;
+  right: 6%;
+  width: 24rem;
+  height: 24rem;
+  background: rgba(226, 232, 240, 0.72);
+}
+
+.dark .welcome-screen__blur--two {
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.welcome-screen__blur--three {
+  right: 18%;
+  bottom: -8%;
+  width: 30rem;
+  height: 30rem;
+  background: rgba(241, 245, 249, 0.85);
+}
+
+.dark .welcome-screen__blur--three {
+  background: rgba(2, 6, 23, 0.85);
+}
+
+@keyframes welcomeWordIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
