@@ -8,6 +8,8 @@ const authResponse = (user) => ({
   user: sanitizeUser(user)
 });
 
+const normalizeEmail = (email) => (typeof email === 'string' ? email.trim().toLowerCase() : '');
+
 const getGoogleClient = () => {
   if (!process.env.GOOGLE_CLIENT_ID) {
     return null;
@@ -18,26 +20,32 @@ const getGoogleClient = () => {
 
 export const signup = async (req, res) => {
   const { name, email, password } = req.body;
+  const normalizedEmail = normalizeEmail(email);
 
-  if (!name || !email || !password) {
+  if (!name || !normalizedEmail || !password) {
     return res.status(400).json({ message: 'Name, email, and password are required' });
   }
 
-  const existingUser = await findUserByEmail(email);
+  const existingUser = await findUserByEmail(normalizedEmail);
   if (existingUser) {
     return res.status(409).json({ message: 'User already exists' });
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await createUser({ name, email, password: hashedPassword });
+  const user = await createUser({ name, email: normalizedEmail, password: hashedPassword });
 
   return res.status(201).json(authResponse(user));
 };
 
 export const login = async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = normalizeEmail(email);
 
-  const user = await findUserByEmail(email);
+  if (!normalizedEmail || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  const user = await findUserByEmail(normalizedEmail);
   if (!user) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
@@ -46,7 +54,21 @@ export const login = async (req, res) => {
     return res.status(401).json({ message: 'You signed up with Google. Please use "Forgot password" to set a password for direct login.' });
   }
 
-  const passwordMatch = await bcrypt.compare(password, user.password);
+  let passwordMatch = false;
+
+  try {
+    passwordMatch = await bcrypt.compare(password, user.password);
+  } catch {
+    passwordMatch = false;
+  }
+
+  if (!passwordMatch && user.password === password) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await updateUser(user.id, { password: hashedPassword });
+    user.password = hashedPassword;
+    passwordMatch = true;
+  }
+
   if (!passwordMatch) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
@@ -56,12 +78,13 @@ export const login = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = normalizeEmail(email);
 
-  if (!email || !password) {
+  if (!normalizedEmail || !password) {
     return res.status(400).json({ message: 'Email and new password are required' });
   }
 
-  const user = await findUserByEmail(email);
+  const user = await findUserByEmail(normalizedEmail);
   if (!user) {
     return res.status(404).json({ message: 'No account found for this email' });
   }

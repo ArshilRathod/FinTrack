@@ -13,7 +13,7 @@ export const updateProfile = async (req, res) => {
 
   const user = await updateUser(req.user.id, {
     name,
-    email: req.body.email?.toLowerCase(),
+    email: req.body.email?.trim().toLowerCase(),
     firstName,
     lastName,
     phone: req.body.phone?.trim() || '',

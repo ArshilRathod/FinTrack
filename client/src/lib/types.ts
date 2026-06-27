@@ -18,10 +18,13 @@ export type User = {
   riskPreference: 'Conservative' | 'Balanced' | 'Growth';
 };
 
+export type StandardExpenseCategory = 'Food' | 'Travel' | 'Shopping' | 'Bills' | 'Others' | 'Hotel' | 'Sightseeing';
+export type ExpenseCategory = StandardExpenseCategory | (string & {});
+
 export type Expense = {
   _id: string;
   amount: number;
-  category: 'Food' | 'Travel' | 'Shopping' | 'Bills' | 'Others' | 'Hotel' | 'Sightseeing';
+  category: ExpenseCategory;
   date: string;
   paymentMethod: 'UPI' | 'Credit Card' | 'Debit Card' | 'Cash' | 'Net Banking' | 'Diary Entry' | 'Imported';
   notes: string;

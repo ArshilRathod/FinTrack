@@ -26,7 +26,7 @@ export const ResetPasswordPage = () => {
       }
 
       const { data } = await api.post('/auth/forgot-password', {
-        email: form.email,
+        email: form.email.trim(),
         password: form.password
       });
 

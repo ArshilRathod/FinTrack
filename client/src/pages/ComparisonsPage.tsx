@@ -5,7 +5,17 @@ import { SectionHeader } from '../components/ui/SectionHeader';
 import { compareCards, creditCards } from '../lib/creditCardTools';
 import { compareLoans, loanProducts } from '../lib/loanTools';
 
-const numericComparisons = [
+type NumericComparison = {
+  id: string;
+  title: string;
+  options: Array<{
+    name: string;
+    metrics: Record<string, string>;
+  }>;
+  example: string;
+};
+
+const numericComparisons: NumericComparison[] = [
   {
     id: 'savings-vs-fd-vs-mf',
     title: 'Savings Account vs Fixed Deposit vs Mutual Funds',

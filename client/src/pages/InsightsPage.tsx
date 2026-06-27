@@ -152,7 +152,7 @@ export const InsightsPage = () => {
   const activeBudget = useMemo(() => suggestedBudgets.find((budget) => budget.id === activeBudgetId) || null, [activeBudgetId, suggestedBudgets]);
 
   const realtimeInsights = useMemo(() => {
-    const safeExpenses = expenses || [];
+    const safeExpenses: Expense[] = expenses || [];
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -161,13 +161,13 @@ export const InsightsPage = () => {
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
 
-    const monthlyTotal = monthlyExpenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+    const monthlyTotal = monthlyExpenses.reduce((sum: number, exp: Expense) => sum + (Number(exp.amount) || 0), 0);
     const income = Number(user?.monthlyIncome) || 0;
     const savingsGoal = Number(user?.savingsGoal) || 0;
     const netAfterSpend = income - monthlyTotal;
 
     const categoryTotals: Record<string, number> = {};
-    monthlyExpenses.forEach((exp) => {
+    monthlyExpenses.forEach((exp: Expense) => {
       const key = exp.category || 'Other';
       categoryTotals[key] = (categoryTotals[key] || 0) + (Number(exp.amount) || 0);
     });
@@ -175,9 +175,9 @@ export const InsightsPage = () => {
 
     const weeklyAvg = weeklySeries.reduce((sum, point) => sum + point.amount, 0) / 7;
 
-    const investmentSignals = monthlyExpenses.filter((exp) => {
+    const investmentSignals = monthlyExpenses.filter((exp: Expense) => {
       const note = `${exp.notes || ''} ${exp.paymentMethod || ''}`.toLowerCase();
-      return note.includes('invest') || note.includes('mutual') || note.includes('sip') || exp.category === 'Investment';
+      return note.includes('invest') || note.includes('mutual') || note.includes('sip') || String(exp.category) === 'Investment';
     });
 
     const expenseInsights = [
@@ -251,7 +251,8 @@ export const InsightsPage = () => {
 
   const availableYears = useMemo(() => {
     const years = new Set<number>();
-    (expenses || []).forEach((exp) => years.add(new Date(exp.date).getFullYear()));
+    const safeExpenses: Expense[] = expenses || [];
+    safeExpenses.forEach((exp: Expense) => years.add(new Date(exp.date).getFullYear()));
     years.add(new Date().getFullYear());
     return Array.from(years).sort((a, b) => b - a);
   }, [expenses]);

@@ -1,6 +1,9 @@
 {
   "name": "fintrack",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "client",
     "server"

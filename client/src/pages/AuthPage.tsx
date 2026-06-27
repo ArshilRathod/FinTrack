@@ -47,7 +47,10 @@ export const AuthPage = ({ mode }: { mode: 'login' | 'signup' }) => {
     mutationFn: async () => {
       setErrorMessage('');
       const endpoint = mode === 'login' ? '/auth/login' : '/auth/signup';
-      const payload = mode === 'login' ? { email: form.email, password: form.password } : form;
+      const payload =
+        mode === 'login'
+          ? { email: form.email.trim(), password: form.password }
+          : { ...form, email: form.email.trim() };
       const { data } = await api.post(endpoint, payload);
       return data;
     },

@@ -577,7 +577,7 @@ export const LoansPage = () => {
                     </div>
                     <div className="min-w-[220px]">
                       <Field label="Type">
-                        <Select value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value as FinancialItemType }))}>
+                        <Select value={form.type} onChange={(value) => setForm((current) => ({ ...current, type: value as FinancialItemType }))}>
                           {itemTypeOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}

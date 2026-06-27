@@ -1,4 +1,4 @@
-import { BookOpen, Plus, Users, Wallet, ArrowRight, Search, Filter, MoreHorizontal, Calendar, ChevronRight, X, Trash2, Edit2, CheckCircle2, IndianRupee, Tag, FileText, CheckSquare, Square, Check, Share2, Download } from 'lucide-react';
+import { BookOpen, Plus, Users, Wallet, ArrowRight, Search, Filter, MoreHorizontal, Calendar, ChevronRight, X, Trash2, Edit2, CheckCircle2, IndianRupee, Tag, FileText, CheckSquare, Square, Check, Share2, Download, GripVertical } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Input';
@@ -6,9 +6,10 @@ import { useDiaries, Diary } from '../hooks/useDiaries';
 import { useExpenses } from '../hooks/useExpenses';
 import { format } from 'date-fns';
 import { clsx } from 'clsx';
- 
-type DiaryCategory = 'Food' | 'Travel' | 'Shopping' | 'Bills' | 'Others' | 'Hotel' | 'Sightseeing';
-type CategorySelect = string;
+import type { ExpenseCategory, StandardExpenseCategory } from '../lib/types';
+
+type CategorySelect = ExpenseCategory | 'Custom';
+type DiaryExpenseSort = 'manual' | 'latest' | 'oldest' | 'amount-high' | 'amount-low' | 'category' | 'note';
 
 interface ExpenseForm {
   amount: string;
@@ -26,7 +27,7 @@ interface ExpenseForm {
 export const FinanceDiaryPage = () => {
   const { diaries, isLoading, createDiary, deleteDiary, updateDiary } = useDiaries();
   const { expenses: allExpenses, createExpense, updateExpense, deleteExpense } = useExpenses();
-  
+
   const [view, setView] = useState<'list' | 'detail'>('list');
   const [selectedDiary, setSelectedDiary] = useState<Diary | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -35,7 +36,7 @@ export const FinanceDiaryPage = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showExpenseDetailModal, setShowExpenseDetailModal] = useState(false);
   const [detailExpense, setDetailExpense] = useState<any | null>(null);
-  
+
   // Create Modal State
   const [newDiaryName, setNewDiaryName] = useState('');
   const [newDiaryMembers, setNewDiaryMembers] = useState<string[]>(['']);
@@ -43,9 +44,9 @@ export const FinanceDiaryPage = () => {
   const [editDiaryMembers, setEditDiaryMembers] = useState<string[]>(['']);
 
   // Manual Expense State
-  const [manualForm, setManualForm] = useState<ExpenseForm>({ 
-    amount: '', 
-    category: 'Travel', 
+  const [manualForm, setManualForm] = useState<ExpenseForm>({
+    amount: '',
+    category: 'Travel',
     customCategory: '',
     notes: '',
     optionalNote: '',
@@ -61,9 +62,18 @@ export const FinanceDiaryPage = () => {
   const [isSelectingDiaryExpenses, setIsSelectingDiaryExpenses] = useState(false);
   const [selectedDiaryExpenseIds, setSelectedDiaryExpenseIds] = useState<string[]>([]);
   const [bulkDiaryCategory, setBulkDiaryCategory] = useState<CategorySelect>('Travel');
+  const [diaryExpenseSort, setDiaryExpenseSort] = useState<DiaryExpenseSort>('latest');
+  const [draggedDiaryExpenseId, setDraggedDiaryExpenseId] = useState<string | null>(null);
+  const [diaryExpenseOrders, setDiaryExpenseOrders] = useState<Record<string, string[]>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('fintrack-diary-expense-orders') || '{}');
+    } catch {
+      return {};
+    }
+  });
 
-  const diaryCategories: DiaryCategory[] = ['Travel', 'Food', 'Shopping', 'Bills', 'Others', 'Hotel', 'Sightseeing'];
-  const isStandardCategory = (value: string): value is DiaryCategory => diaryCategories.includes(value as DiaryCategory);
+  const diaryCategories: StandardExpenseCategory[] = ['Travel', 'Food', 'Shopping', 'Bills', 'Others', 'Hotel', 'Sightseeing'];
+  const isStandardCategory = (value: string): value is StandardExpenseCategory => diaryCategories.includes(value as StandardExpenseCategory);
 
   const extraCategories = useMemo(() => {
     const fromExpenses = [
@@ -131,10 +141,10 @@ export const FinanceDiaryPage = () => {
     setSelectedDiary((prev) =>
       prev
         ? {
-            ...prev,
-            name: nextName,
-            members
-          }
+          ...prev,
+          name: nextName,
+          members
+        }
         : prev
     );
     setShowEditDiaryModal(false);
@@ -199,11 +209,11 @@ export const FinanceDiaryPage = () => {
     e.preventDefault();
     if (!selectedDiary || !manualForm.amount) return;
     if (manualForm.category === 'Custom' && !manualForm.customCategory.trim()) return;
-    
+
     const membersToSave = manualForm.splitType === 'equal'
       ? selectedDiary.members
       : manualForm.customSplits;
-    
+
     // Ensure all values are numbers for custom splits
     const finalInvolvedMembers = manualForm.splitType === 'custom'
       ? Object.fromEntries(Object.entries(manualForm.customSplits).map(([m, val]) => [m, Number(val) || 0]))
@@ -219,7 +229,7 @@ export const FinanceDiaryPage = () => {
 
     await createExpense({
       amount: Number(manualForm.amount),
-      category: finalCategory as any,
+      category: finalCategory,
       notes: manualForm.notes,
       optionalNote: manualForm.optionalNote || '',
       diaryId: selectedDiary._id,
@@ -227,7 +237,7 @@ export const FinanceDiaryPage = () => {
       date: expenseDate,
       paymentMethod: 'Diary Entry'
     });
-    
+
     setShowManualExpenseModal(false);
     setManualForm({ amount: '', category: 'Travel', customCategory: '', notes: '', optionalNote: '', date: '', involvedMembers: [], splitType: 'equal', customSplits: {} });
   };
@@ -250,7 +260,7 @@ export const FinanceDiaryPage = () => {
         id: editingForm.id!,
         updates: {
           amount: Number(editingForm.amount),
-          category: finalCategory as any,
+          category: finalCategory,
           notes: editingForm.notes,
           optionalNote: editingForm.optionalNote || '',
           date: editingForm.date,
@@ -295,9 +305,9 @@ export const FinanceDiaryPage = () => {
     if (!selectedDiary) return;
     setManualForm(prev => {
       const allSelected = prev.involvedMembers.length === selectedDiary.members.length;
-      return { 
-        ...prev, 
-        involvedMembers: allSelected ? [] : [...selectedDiary.members] 
+      return {
+        ...prev,
+        involvedMembers: allSelected ? [] : [...selectedDiary.members]
       };
     });
   };
@@ -307,9 +317,9 @@ export const FinanceDiaryPage = () => {
     setEditingForm(prev => {
       if (!prev) return null;
       const allSelected = prev.involvedMembers.length === selectedDiary.members.length;
-      return { 
-        ...prev, 
-        involvedMembers: allSelected ? [] : [...selectedDiary.members] 
+      return {
+        ...prev,
+        involvedMembers: allSelected ? [] : [...selectedDiary.members]
       };
     });
   };
@@ -328,7 +338,32 @@ export const FinanceDiaryPage = () => {
     const diary = diaries.find(d => d._id === selectedDiary._id) || selectedDiary;
     const total = diary.expenses?.reduce((sum, e) => sum + (Number(e?.amount) || 0), 0) || 0;
     const diaryExpenses = diary.expenses || [];
-    const isAllDiaryExpensesSelected = diaryExpenses.length > 0 && selectedDiaryExpenseIds.length === diaryExpenses.length;
+    const savedDiaryExpenseOrder = diaryExpenseOrders[diary._id] || [];
+    const diaryExpenseIds = diaryExpenses.map((expense: any) => expense._id);
+    const orderedDiaryExpenseIds = [
+      ...savedDiaryExpenseOrder.filter((id) => diaryExpenseIds.includes(id)),
+      ...diaryExpenseIds.filter((id) => !savedDiaryExpenseOrder.includes(id))
+    ];
+    const manualOrderRank = new Map(orderedDiaryExpenseIds.map((id, index) => [id, index]));
+    const sortedDiaryExpenses = diaryExpenses.slice().sort((a: any, b: any) => {
+      switch (diaryExpenseSort) {
+        case 'manual':
+          return (manualOrderRank.get(a._id) ?? Number.MAX_SAFE_INTEGER) - (manualOrderRank.get(b._id) ?? Number.MAX_SAFE_INTEGER);
+        case 'oldest':
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        case 'amount-high':
+          return (Number(b.amount) || 0) - (Number(a.amount) || 0);
+        case 'amount-low':
+          return (Number(a.amount) || 0) - (Number(b.amount) || 0);
+        case 'category':
+          return String(a.category || '').localeCompare(String(b.category || ''));
+        case 'note':
+          return String(a.notes || '').localeCompare(String(b.notes || ''));
+        default:
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+      }
+    });
+    const isAllDiaryExpensesSelected = sortedDiaryExpenses.length > 0 && selectedDiaryExpenseIds.length === sortedDiaryExpenses.length;
 
     const getExpenseSplit = (expense: any) => {
       const amount = Number(expense?.amount) || 0;
@@ -378,8 +413,43 @@ export const FinanceDiaryPage = () => {
     };
 
     const toggleSelectAllDiaryExpenses = () => {
-      setSelectedDiaryExpenseIds(isAllDiaryExpensesSelected ? [] : diaryExpenses.map((expense) => expense._id));
+      setSelectedDiaryExpenseIds(isAllDiaryExpensesSelected ? [] : sortedDiaryExpenses.map((expense) => expense._id));
     };
+
+    const saveDiaryExpenseOrder = (nextOrder: string[]) => {
+      const nextOrders = {
+        ...diaryExpenseOrders,
+        [diary._id]: nextOrder
+      };
+      setDiaryExpenseOrders(nextOrders);
+      localStorage.setItem('fintrack-diary-expense-orders', JSON.stringify(nextOrders));
+    };
+
+    const moveDiaryExpense = (targetExpenseId: string) => {
+      if (!draggedDiaryExpenseId || draggedDiaryExpenseId === targetExpenseId) return;
+
+      const nextOrder = sortedDiaryExpenses.map((expense) => expense._id);
+      const fromIndex = nextOrder.indexOf(draggedDiaryExpenseId);
+      const toIndex = nextOrder.indexOf(targetExpenseId);
+      if (fromIndex === -1 || toIndex === -1) return;
+
+      const [movedId] = nextOrder.splice(fromIndex, 1);
+      nextOrder.splice(toIndex, 0, movedId);
+      saveDiaryExpenseOrder(nextOrder);
+      setDiaryExpenseSort('manual');
+      setDraggedDiaryExpenseId(null);
+    };
+
+    const diarySortLabels: Record<DiaryExpenseSort, string> = {
+      manual: 'Custom order',
+      latest: 'Latest first',
+      oldest: 'Oldest first',
+      'amount-high': 'Amount high to low',
+      'amount-low': 'Amount low to high',
+      category: 'Category A to Z',
+      note: 'Note A to Z'
+    };
+    const activeDiarySortLabel = diarySortLabels[diaryExpenseSort];
 
     const bulkDeleteDiaryExpenses = async () => {
       if (!selectedDiaryExpenseIds.length) return;
@@ -401,15 +471,16 @@ export const FinanceDiaryPage = () => {
       setSelectedDiaryExpenseIds([]);
       setIsSelectingDiaryExpenses(false);
     };
-    
+
     const downloadDiaryCsv = () => {
-      if (!diary.expenses?.length) return;
-      
-      const headers = ['Date', 'Note', 'Category', 'Amount', 'Split Details'];
-      const rows = diary.expenses.map(expense => {
+      if (!sortedDiaryExpenses.length) return;
+
+      const headers = ['Order', 'Date', 'Note', 'Category', 'Amount', 'Split Details'];
+      const rows = sortedDiaryExpenses.map((expense, index) => {
         const split = getExpenseSplit(expense);
         const splitText = split.members.map(m => `${m}: ₹${Math.round(split.amounts[m])}`).join(' | ');
         return [
+          index + 1,
           format(new Date(expense.date), 'yyyy-MM-dd'),
           expense.notes || '',
           expense.category,
@@ -436,10 +507,11 @@ export const FinanceDiaryPage = () => {
 
     const downloadDiaryPdf = () => {
       if (typeof window === 'undefined') return;
-      
-      const rows = diary.expenses?.map(expense => {
+
+      const rows = sortedDiaryExpenses.map((expense, index) => {
         const split = getExpenseSplit(expense);
         return {
+          order: index + 1,
           date: format(new Date(expense.date), 'dd MMM yyyy'),
           notes: expense.notes || 'Expense',
           category: expense.category,
@@ -473,6 +545,7 @@ export const FinanceDiaryPage = () => {
             <div class="header">
               <h1>${diary.name}</h1>
               <div class="meta">Generated on ${format(new Date(), 'dd MMMM yyyy HH:mm')}</div>
+              <div class="meta">Entry order: ${activeDiarySortLabel}</div>
             </div>
 
             <div class="summary-grid">
@@ -482,7 +555,7 @@ export const FinanceDiaryPage = () => {
               </div>
               <div class="card">
                 <div class="card-title">Number of Entries</div>
-                <div class="card-value">${diary.expenses?.length || 0}</div>
+                <div class="card-value">${sortedDiaryExpenses.length}</div>
               </div>
             </div>
 
@@ -510,7 +583,7 @@ export const FinanceDiaryPage = () => {
               <tbody>
                 ${rows.map(row => `
                   <tr>
-                    <td>${row.date}</td>
+                    <td><div style="font-size: 11px; color: #64748b;">#${row.order}</div>${row.date}</td>
                     <td>
                       <div style="font-weight: bold;">${row.notes}</div>
                       <div style="font-size: 11px; color: #64748b;">${row.category}</div>
@@ -524,7 +597,7 @@ export const FinanceDiaryPage = () => {
           </body>
         </html>
       `;
-      
+
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
         alert('Please allow popups to download the PDF report');
@@ -539,10 +612,18 @@ export const FinanceDiaryPage = () => {
     };
 
     const shareDiarySummary = async () => {
+      const orderedEntries = sortedDiaryExpenses.map((expense, index) => {
+        const split = getExpenseSplit(expense);
+        const splitText = split.members.map(m => `${m}: ₹${Math.round(split.amounts[m]).toLocaleString()}`).join(', ');
+        return `${index + 1}. ${format(new Date(expense.date), 'dd MMM yyyy')} - ${expense.notes || 'Expense'} - ₹${Number(expense.amount || 0).toLocaleString()} (${expense.category}) [${splitText}]`;
+      }).join('\n');
+
       const summaryText = `📊 Finance Diary: ${diary.name}\n` +
         `💰 Total Cost: ₹${total.toLocaleString()}\n` +
+        `↕️ Entry Order: ${activeDiarySortLabel}\n` +
         `👥 Members:\n` +
         diary.members.map(m => `  - ${m}: ₹${Math.round(balances[m]).toLocaleString()}`).join('\n') +
+        (orderedEntries ? `\n\nTransactions:\n${orderedEntries}` : '') +
         `\n\nGenerated via FinTrack`;
 
       if (navigator.share) {
@@ -567,7 +648,7 @@ export const FinanceDiaryPage = () => {
     // Calculate Splits
     const balances: Record<string, number> = {};
     diary.members.forEach(m => balances[m] = 0);
-    
+
     diary.expenses?.forEach(expense => {
       const split = getExpenseSplit(expense);
       split.members.forEach((member: string) => {
@@ -581,7 +662,7 @@ export const FinanceDiaryPage = () => {
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-ink dark:text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <button 
+            <button
               onClick={() => setView('list')}
               className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-500 hover:text-accent hover:border-accent transition-all shadow-sm"
             >
@@ -590,7 +671,7 @@ export const FinanceDiaryPage = () => {
             <div>
               <h1 className="text-4xl font-black tracking-tight">{diary.name}</h1>
               <div className="flex items-center gap-3 mt-2">
-                 <div className="flex -space-x-2">
+                <div className="flex -space-x-2">
                   {diary.members.map((m, i) => (
                     <div key={i} className="w-8 h-8 rounded-full bg-slate-950 border-2 border-white dark:border-slate-950 flex items-center justify-center text-[10px] font-bold text-white uppercase dark:bg-accent" title={m}>
                       {m[0]}
@@ -640,7 +721,7 @@ export const FinanceDiaryPage = () => {
               </Button>
             </div>
 
-            <Button 
+            <Button
               onClick={() => {
                 setManualForm(prev => ({ ...prev, involvedMembers: [...diary.members] }));
                 setShowManualExpenseModal(true);
@@ -650,14 +731,14 @@ export const FinanceDiaryPage = () => {
               <Plus size={18} /> Add Entry
             </Button>
 
-            <Button 
-              variant="danger" 
-              onClick={() => { 
+            <Button
+              variant="danger"
+              onClick={() => {
                 if (window.confirm('Are you sure you want to delete this entire diary? This cannot be undone.')) {
-                  deleteDiary(diary._id); 
-                  setView('list'); 
+                  deleteDiary(diary._id);
+                  setView('list');
                 }
-              }} 
+              }}
               className="rounded-2xl w-14 h-14 p-0 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white dark:bg-red-500/20 dark:hover:bg-red-600 transition-all shadow-lg shadow-red-500/10"
             >
               <Trash2 size={24} />
@@ -694,14 +775,25 @@ export const FinanceDiaryPage = () => {
                     </Button>
                   </div>
                 ) : (
-                  <Button variant="outline" onClick={() => setIsSelectingDiaryExpenses(true)} className="rounded-2xl px-4 py-2 text-sm">
-                    Select
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select value={diaryExpenseSort} onChange={(val) => setDiaryExpenseSort(val as DiaryExpenseSort)} className="min-w-[180px]">
+                      <option value="manual">Custom order</option>
+                      <option value="latest">Latest first</option>
+                      <option value="oldest">Oldest first</option>
+                      <option value="amount-high">Amount high to low</option>
+                      <option value="amount-low">Amount low to high</option>
+                      <option value="category">Category A to Z</option>
+                      <option value="note">Note A to Z</option>
+                    </Select>
+                    <Button variant="outline" onClick={() => setIsSelectingDiaryExpenses(true)} className="rounded-2xl px-4 py-2 text-sm">
+                      Select
+                    </Button>
+                  </div>
                 )}
               </div>
 
               <div className="space-y-4">
-                {diary.expenses?.length === 0 ? (
+                {sortedDiaryExpenses.length === 0 ? (
                   <div className="py-24 text-center space-y-4 bg-slate-50 dark:bg-white/5 rounded-[32px] border-2 border-dashed border-slate-100 dark:border-white/5">
                     <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-300">
                       <FileText size={32} />
@@ -712,133 +804,162 @@ export const FinanceDiaryPage = () => {
                     </div>
                   </div>
                 ) : (
-                  diary.expenses?.map((expense) => {
+                  sortedDiaryExpenses.map((expense) => {
                     const split = getExpenseSplit(expense);
                     const safeAmount = Number(expense?.amount) || 0;
                     const isSelected = selectedDiaryExpenseIds.includes(expense._id);
 
                     return (
-                    <div
-                      key={expense._id}
-                      onClick={() => {
-                        if (isSelectingDiaryExpenses) {
-                          toggleDiaryExpenseSelection(expense._id);
-                          return;
-                        }
-                        setDetailExpense(expense);
-                        setShowExpenseDetailModal(true);
-                      }}
-                      className={clsx(
-                        "flex items-center justify-between p-6 rounded-[28px] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:border-accent/40 transition-all shadow-sm cursor-pointer",
-                        isSelected && "border-accent/60 ring-2 ring-accent/20"
-                      )}
-                    >
-                      <div className="flex items-center gap-5">
-                        {isSelectingDiaryExpenses && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleDiaryExpenseSelection(expense._id);
-                            }}
-                            className={clsx(
-                              "flex h-8 w-8 items-center justify-center rounded-lg border transition",
-                              isSelected ? "border-slate-950 bg-slate-950 text-white dark:border-accent dark:bg-accent" : "border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-300"
-                            )}
-                            aria-label={`Select expense ${expense._id}`}
-                          >
-                            {isSelected ? <Check size={16} /> : <Square size={16} />}
-                          </button>
+                      <div
+                        key={expense._id}
+                        onDragOver={(event) => {
+                          if (!draggedDiaryExpenseId) return;
+                          event.preventDefault();
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          moveDiaryExpense(expense._id);
+                        }}
+                        onClick={() => {
+                          if (isSelectingDiaryExpenses) {
+                            toggleDiaryExpenseSelection(expense._id);
+                            return;
+                          }
+                          setDetailExpense(expense);
+                          setShowExpenseDetailModal(true);
+                        }}
+                        className={clsx(
+                          "flex items-center justify-between p-6 rounded-[28px] bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 group hover:border-accent/40 transition-all shadow-sm cursor-pointer",
+                          draggedDiaryExpenseId === expense._id && "opacity-50",
+                          isSelected && "border-accent/60 ring-2 ring-accent/20"
                         )}
-                        <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:bg-slate-950 group-hover:text-white transition-colors dark:group-hover:bg-accent">
-                          <Wallet size={24} />
-                        </div>
-                        <div>
-                          <p className="font-bold text-lg leading-tight">{expense.notes || 'Expense'}</p>
-                          <div className="flex items-center gap-3 mt-1.5">
-                            <span className="text-xs text-slate-400 font-medium">{format(new Date(expense.date), 'dd MMM yyyy')}</span>
-                            <span className="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
-                            <div className="flex items-center gap-1.5">
-                              <Users size={12} className="text-slate-400" />
-                              <div className="flex -space-x-1.5">
-                                {split.members.map((m: string, i: number) => (
-                                  <div key={i} className="w-5 h-5 rounded-full bg-slate-200 dark:bg-white/20 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black text-slate-600 dark:text-white uppercase" title={m}>
-                                    {m[0]}
-                                  </div>
-                                ))}
+                      >
+                        <div className="flex items-center gap-5">
+                          {!isSelectingDiaryExpenses && (
+                            <button
+                              type="button"
+                              draggable
+                              onDragStart={(event) => {
+                                event.stopPropagation();
+                                event.dataTransfer.effectAllowed = 'move';
+                                event.dataTransfer.setData('text/plain', expense._id);
+                                setDraggedDiaryExpenseId(expense._id);
+                              }}
+                              onDragEnd={() => setDraggedDiaryExpenseId(null)}
+                              onClick={(event) => event.stopPropagation()}
+                              className="flex h-10 w-8 cursor-grab items-center justify-center rounded-xl text-slate-300 transition hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing dark:text-slate-600 dark:hover:bg-white/5 dark:hover:text-slate-300"
+                              aria-label="Drag to reorder entry"
+                              title="Drag to reorder"
+                            >
+                              <GripVertical size={18} />
+                            </button>
+                          )}
+                          {isSelectingDiaryExpenses && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDiaryExpenseSelection(expense._id);
+                              }}
+                              className={clsx(
+                                "flex h-8 w-8 items-center justify-center rounded-lg border transition",
+                                isSelected ? "border-slate-950 bg-slate-950 text-white dark:border-accent dark:bg-accent" : "border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-300"
+                              )}
+                              aria-label={`Select expense ${expense._id}`}
+                            >
+                              {isSelected ? <Check size={16} /> : <Square size={16} />}
+                            </button>
+                          )}
+                          <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:bg-slate-950 group-hover:text-white transition-colors dark:group-hover:bg-accent">
+                            <Wallet size={24} />
+                          </div>
+                          <div>
+                            <p className="font-bold text-lg leading-tight">{expense.notes || 'Expense'}</p>
+                            <div className="flex items-center gap-3 mt-1.5">
+                              <span className="text-xs text-slate-400 font-medium">{format(new Date(expense.date), 'dd MMM yyyy')}</span>
+                              <span className="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
+                              <div className="flex items-center gap-1.5">
+                                <Users size={12} className="text-slate-400" />
+                                <div className="flex -space-x-1.5">
+                                  {split.members.map((m: string, i: number) => (
+                                    <div key={i} className="w-5 h-5 rounded-full bg-slate-200 dark:bg-white/20 border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black text-slate-600 dark:text-white uppercase" title={m}>
+                                      {m[0]}
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {split.members.map((member: string) => (
-                              <div
-                                key={member}
-                                className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-white/80"
-                              >
-                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[9px] font-black">
-                                  {member[0]}
-                                </span>
-                                <span>{member}</span>
-                                <span className="text-[9px] font-black opacity-80">₹{Math.round(split.amounts[member] || 0).toLocaleString()}</span>
-                              </div>
-                            ))}
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {split.members.map((member: string) => (
+                                <div
+                                  key={member}
+                                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-white/80"
+                                >
+                                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/70 text-[9px] font-black">
+                                    {member[0]}
+                                  </span>
+                                  <span>{member}</span>
+                                  <span className="text-[9px] font-black opacity-80">₹{Math.round(split.amounts[member] || 0).toLocaleString()}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-2xl font-black tracking-tight">₹{safeAmount.toLocaleString()}</p>
-                          <p className="text-[10px] font-bold text-accent uppercase tracking-widest mt-1.5">{expense.category}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={(e) => {
-                              if (isSelectingDiaryExpenses) return;
-                              e.stopPropagation();
-                              const isCustom = typeof expense.involvedMembers === 'object' && !Array.isArray(expense.involvedMembers);
-                              
-                              const normalizedCategory = isStandardCategory(expense.category)
-                                ? expense.category
-                                : String(expense.category || 'Custom');
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="text-2xl font-black tracking-tight">₹{safeAmount.toLocaleString()}</p>
+                            <p className="text-[10px] font-bold text-accent uppercase tracking-widest mt-1.5">{expense.category}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                if (isSelectingDiaryExpenses) return;
+                                e.stopPropagation();
+                                const isCustom = typeof expense.involvedMembers === 'object' && !Array.isArray(expense.involvedMembers);
 
-                              setEditingForm({
-                                id: expense._id,
-                                amount: String(safeAmount),
-                                category: normalizedCategory,
-                                customCategory: normalizedCategory === 'Custom' ? String(expense.category || '') : '',
-                                notes: expense.notes,
-                                optionalNote: expense.optionalNote || '',
-                                date: expense.date,
-                                involvedMembers: Array.isArray(expense.involvedMembers) ? [...expense.involvedMembers] : [],
-                                splitType: isCustom ? 'custom' : 'equal',
-                                customSplits: isCustom ? Object.fromEntries(Object.entries(expense.involvedMembers).map(([m, v]) => [m, String(v)])) : {}
-                              });
-                              setShowEditModal(true);
-                            }}
-                            className={clsx(
-                              "w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 transition-all",
-                              isSelectingDiaryExpenses ? "opacity-40 cursor-not-allowed" : "hover:text-accent hover:bg-accent/10"
-                            )}
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button 
-                            onClick={(e) => {
-                              if (isSelectingDiaryExpenses) return;
-                              e.stopPropagation();
-                              handleDeleteExpense(expense._id);
-                            }}
-                            className={clsx(
-                              "w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 transition-all",
-                              isSelectingDiaryExpenses ? "opacity-40 cursor-not-allowed" : "hover:text-red-500 hover:bg-red-500/10"
-                            )}
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                                const normalizedCategory = isStandardCategory(expense.category)
+                                  ? expense.category
+                                  : String(expense.category || 'Custom');
+
+                                setEditingForm({
+                                  id: expense._id,
+                                  amount: String(safeAmount),
+                                  category: normalizedCategory,
+                                  customCategory: normalizedCategory === 'Custom' ? String(expense.category || '') : '',
+                                  notes: expense.notes,
+                                  optionalNote: expense.optionalNote || '',
+                                  date: expense.date,
+                                  involvedMembers: Array.isArray(expense.involvedMembers) ? [...expense.involvedMembers] : [],
+                                  splitType: isCustom ? 'custom' : 'equal',
+                                  customSplits: isCustom ? Object.fromEntries(Object.entries(expense.involvedMembers).map(([m, v]) => [m, String(v)])) : {}
+                                });
+                                setShowEditModal(true);
+                              }}
+                              className={clsx(
+                                "w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 transition-all",
+                                isSelectingDiaryExpenses ? "opacity-40 cursor-not-allowed" : "hover:text-accent hover:bg-accent/10"
+                              )}
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                if (isSelectingDiaryExpenses) return;
+                                e.stopPropagation();
+                                handleDeleteExpense(expense._id);
+                              }}
+                              className={clsx(
+                                "w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 transition-all",
+                                isSelectingDiaryExpenses ? "opacity-40 cursor-not-allowed" : "hover:text-red-500 hover:bg-red-500/10"
+                              )}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )})
+                    )
+                  })
                 )}
               </div>
             </div>
@@ -847,7 +968,7 @@ export const FinanceDiaryPage = () => {
           <div className="space-y-6">
             <div className="bg-slate-950 dark:bg-accent rounded-[32px] p-8 text-white shadow-2xl shadow-accent/20 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-white/20 transition-all duration-700" />
-              
+
               <p className="text-xs font-bold uppercase tracking-[0.2em] opacity-60 mb-2">Total Trip Cost</p>
               <h2 className="text-5xl font-black tracking-tight mb-10">₹{total.toLocaleString()}</h2>
 
@@ -856,10 +977,10 @@ export const FinanceDiaryPage = () => {
                   {diary.expenses?.length || 0} Entries
                 </div>
               </div>
-              
+
               <div className="space-y-6 relative z-10">
                 <div className="p-6 rounded-[24px] bg-white/10 backdrop-blur-md border border-white/10">
-                   <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-3 flex items-center gap-2">
+                  <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-3 flex items-center gap-2">
                     <CheckCircle2 size={14} /> Split Accuracy Verified
                   </p>
                   <p className="text-xs text-white/70 leading-relaxed font-medium">Global shares are calculated based on individual transaction involvement.</p>
@@ -907,12 +1028,12 @@ export const FinanceDiaryPage = () => {
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Amount</label>
                       <div className="relative">
                         <IndianRupee className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <input 
+                        <input
                           required
                           type="number"
                           autoFocus
                           value={manualForm.amount}
-                          onChange={(e) => setManualForm({...manualForm, amount: e.target.value})}
+                          onChange={(e) => setManualForm({ ...manualForm, amount: e.target.value })}
                           placeholder="0"
                           className="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 focus:outline-none focus:border-accent transition-all font-black text-xl"
                         />
@@ -923,7 +1044,7 @@ export const FinanceDiaryPage = () => {
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Category</label>
                       <div className="relative">
                         <Tag className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <select 
+                        <select
                           required
                           value={manualForm.category}
                           onChange={(e) => {
@@ -962,10 +1083,10 @@ export const FinanceDiaryPage = () => {
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Description</label>
                     <div className="relative">
                       <FileText className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                      <input 
+                      <input
                         required
                         value={manualForm.notes}
-                        onChange={(e) => setManualForm({...manualForm, notes: e.target.value})}
+                        onChange={(e) => setManualForm({ ...manualForm, notes: e.target.value })}
                         placeholder="What was this for?"
                         className="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 focus:outline-none focus:border-accent transition-all font-bold"
                       />
@@ -976,7 +1097,7 @@ export const FinanceDiaryPage = () => {
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Date (Optional)</label>
                     <div className="relative">
                       <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                      <input 
+                      <input
                         type="date"
                         value={manualForm.date || ''}
                         onChange={(e) => setManualForm({ ...manualForm, date: e.target.value })}
@@ -989,9 +1110,9 @@ export const FinanceDiaryPage = () => {
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Optional Note</label>
                     <div className="relative">
                       <FileText className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                      <input 
+                      <input
                         value={manualForm.optionalNote || ''}
-                        onChange={(e) => setManualForm({...manualForm, optionalNote: e.target.value})}
+                        onChange={(e) => setManualForm({ ...manualForm, optionalNote: e.target.value })}
                         placeholder="Extra details (optional)"
                         className="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 focus:outline-none focus:border-accent transition-all font-bold"
                       />
@@ -1002,7 +1123,7 @@ export const FinanceDiaryPage = () => {
                     <div className="flex items-center justify-between px-1">
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Split Configuration</label>
                       <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setManualForm({ ...manualForm, splitType: 'equal', involvedMembers: [...diary.members] })}
                           className={clsx(
@@ -1012,12 +1133,12 @@ export const FinanceDiaryPage = () => {
                         >
                           Equal
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => {
                             const initialCustom = {} as Record<string, string>;
                             diary.members.forEach(m => initialCustom[m] = '');
-                            setManualForm({...manualForm, splitType: 'custom', customSplits: initialCustom});
+                            setManualForm({ ...manualForm, splitType: 'custom', customSplits: initialCustom });
                           }}
                           className={clsx(
                             "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
@@ -1033,8 +1154,8 @@ export const FinanceDiaryPage = () => {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between px-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Involved Members</p>
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             onClick={toggleAllManualMembers}
                             className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline"
                           >
@@ -1043,7 +1164,7 @@ export const FinanceDiaryPage = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           {diary.members.map((member) => (
-                            <div 
+                            <div
                               key={member}
                               onClick={() => toggleManualMember(member)}
                               className={clsx(
@@ -1076,19 +1197,19 @@ export const FinanceDiaryPage = () => {
                             </div>
                             <div className="relative w-32">
                               <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                              <input 
+                              <input
                                 type="number"
                                 placeholder="0"
                                 value={manualForm.customSplits[member] || ''}
-                                  onChange={(e) => {
-                                    const nextSplits = { ...manualForm.customSplits, [member]: e.target.value };
-                                    const nextTotal = Object.values(nextSplits).reduce((sum, val) => sum + (Number(val) || 0), 0);
-                                    setManualForm({
-                                      ...manualForm, 
-                                      customSplits: nextSplits,
-                                      amount: nextTotal > 0 ? String(nextTotal) : manualForm.amount
-                                    });
-                                  }}
+                                onChange={(e) => {
+                                  const nextSplits = { ...manualForm.customSplits, [member]: e.target.value };
+                                  const nextTotal = Object.values(nextSplits).reduce((sum, val) => sum + (Number(val) || 0), 0);
+                                  setManualForm({
+                                    ...manualForm,
+                                    customSplits: nextSplits,
+                                    amount: nextTotal > 0 ? String(nextTotal) : manualForm.amount
+                                  });
+                                }}
                                 className="w-full pl-8 pr-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 focus:outline-none focus:border-accent text-right font-black"
                               />
                             </div>
@@ -1101,8 +1222,8 @@ export const FinanceDiaryPage = () => {
 
                 <div className="p-8 bg-slate-50 dark:bg-white/5 flex gap-4">
                   <Button variant="outline" type="button" onClick={() => setShowManualExpenseModal(false)} className="flex-1 rounded-[24px] h-16">Cancel</Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={manualForm.involvedMembers.length === 0}
                     className="flex-[2] rounded-[24px] h-16 bg-slate-950 dark:bg-accent text-white shadow-2xl shadow-accent/20 font-black"
                   >
@@ -1130,16 +1251,16 @@ export const FinanceDiaryPage = () => {
                 </div>
 
                 <div className="p-8 space-y-8 max-h-[65vh] overflow-y-auto custom-scrollbar">
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Amount</label>
                       <div className="relative">
                         <IndianRupee className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <input 
+                        <input
                           required
                           type="number"
                           value={editingForm.amount}
-                          onChange={(e) => setEditingForm({...editingForm, amount: e.target.value})}
+                          onChange={(e) => setEditingForm({ ...editingForm, amount: e.target.value })}
                           className="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 focus:outline-none focus:border-accent transition-all font-black text-xl"
                         />
                       </div>
@@ -1149,7 +1270,7 @@ export const FinanceDiaryPage = () => {
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Category</label>
                       <div className="relative">
                         <Tag className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <select 
+                        <select
                           required
                           value={editingForm.category}
                           onChange={(e) => {
@@ -1188,10 +1309,10 @@ export const FinanceDiaryPage = () => {
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Description</label>
                     <div className="relative">
                       <FileText className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                      <input 
+                      <input
                         required
                         value={editingForm.notes}
-                        onChange={(e) => setEditingForm({...editingForm, notes: e.target.value})}
+                        onChange={(e) => setEditingForm({ ...editingForm, notes: e.target.value })}
                         placeholder="What was this for?"
                         className="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 focus:outline-none focus:border-accent transition-all font-bold"
                       />
@@ -1202,7 +1323,7 @@ export const FinanceDiaryPage = () => {
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Date</label>
                     <div className="relative">
                       <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                      <input 
+                      <input
                         required
                         type="date"
                         value={editingForm.date ? format(new Date(editingForm.date), 'yyyy-MM-dd') : ''}
@@ -1216,9 +1337,9 @@ export const FinanceDiaryPage = () => {
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">Optional Note</label>
                     <div className="relative">
                       <FileText className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                      <input 
+                      <input
                         value={editingForm.optionalNote || ''}
-                        onChange={(e) => setEditingForm({...editingForm, optionalNote: e.target.value})}
+                        onChange={(e) => setEditingForm({ ...editingForm, optionalNote: e.target.value })}
                         placeholder="Extra details (optional)"
                         className="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 focus:outline-none focus:border-accent transition-all font-bold"
                       />
@@ -1229,7 +1350,7 @@ export const FinanceDiaryPage = () => {
                     <div className="flex items-center justify-between px-1">
                       <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Split Configuration</label>
                       <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setEditingForm({ ...editingForm!, splitType: 'equal', involvedMembers: [...diary.members] })}
                           className={clsx(
@@ -1239,7 +1360,7 @@ export const FinanceDiaryPage = () => {
                         >
                           Equal
                         </button>
-                        <button 
+                        <button
                           type="button"
                           onClick={() => {
                             const initialCustom = {} as Record<string, string>;
@@ -1251,7 +1372,7 @@ export const FinanceDiaryPage = () => {
                                 initialCustom[m] = '';
                               }
                             });
-                            setEditingForm({...editingForm!, splitType: 'custom', customSplits: initialCustom});
+                            setEditingForm({ ...editingForm!, splitType: 'custom', customSplits: initialCustom });
                           }}
                           className={clsx(
                             "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
@@ -1267,8 +1388,8 @@ export const FinanceDiaryPage = () => {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between px-1">
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Involved Members</p>
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             onClick={toggleAllEditingMembers}
                             className="text-[10px] font-black text-accent uppercase tracking-widest hover:underline"
                           >
@@ -1277,7 +1398,7 @@ export const FinanceDiaryPage = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           {diary.members.map((member) => (
-                            <div 
+                            <div
                               key={member}
                               onClick={() => toggleEditingMember(member)}
                               className={clsx(
@@ -1310,19 +1431,19 @@ export const FinanceDiaryPage = () => {
                             </div>
                             <div className="relative w-32">
                               <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                              <input 
+                              <input
                                 type="number"
                                 placeholder="0"
                                 value={editingForm.customSplits[member] || ''}
-                                  onChange={(e) => {
-                                    const nextSplits = { ...editingForm!.customSplits, [member]: e.target.value };
-                                    const nextTotal = Object.values(nextSplits).reduce((sum, val) => sum + (Number(val) || 0), 0);
-                                    setEditingForm({
-                                      ...editingForm!, 
-                                      customSplits: nextSplits,
-                                      amount: nextTotal > 0 ? String(nextTotal) : editingForm!.amount
-                                    });
-                                  }}
+                                onChange={(e) => {
+                                  const nextSplits = { ...editingForm!.customSplits, [member]: e.target.value };
+                                  const nextTotal = Object.values(nextSplits).reduce((sum, val) => sum + (Number(val) || 0), 0);
+                                  setEditingForm({
+                                    ...editingForm!,
+                                    customSplits: nextSplits,
+                                    amount: nextTotal > 0 ? String(nextTotal) : editingForm!.amount
+                                  });
+                                }}
                                 className="w-full pl-8 pr-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 focus:outline-none focus:border-accent text-right font-black"
                               />
                             </div>
@@ -1335,8 +1456,8 @@ export const FinanceDiaryPage = () => {
 
                 <div className="p-8 bg-slate-50 dark:bg-white/5 flex gap-4">
                   <Button variant="outline" type="button" onClick={() => setShowEditModal(false)} className="flex-1 rounded-[24px] h-16">Cancel</Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={editingForm.involvedMembers.length === 0}
                     className="flex-[2] rounded-[24px] h-16 bg-slate-950 dark:bg-accent text-white shadow-2xl shadow-accent/20 font-black"
                   >
@@ -1508,7 +1629,7 @@ export const FinanceDiaryPage = () => {
           <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Turn group trip expenses into organized memories</p>
         </div>
         <div className="flex gap-4">
-          <Button 
+          <Button
             onClick={() => setShowCreateModal(true)}
             className="rounded-[24px] px-8 h-14 gap-2 bg-slate-950 text-white dark:bg-accent hover:scale-[1.03] active:scale-[0.98] transition-all shadow-xl shadow-accent/20 font-bold"
           >
@@ -1519,7 +1640,7 @@ export const FinanceDiaryPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {diaries?.map((diary) => (
-          <div 
+          <div
             key={diary._id}
             onClick={() => {
               setSelectedDiary(diary);
@@ -1527,10 +1648,10 @@ export const FinanceDiaryPage = () => {
             }}
             className="group relative cursor-pointer"
           >
-             <div className="absolute inset-x-4 -bottom-4 h-12 bg-accent opacity-0 group-hover:opacity-20 blur-3xl transition-all duration-500 rounded-full" />
+            <div className="absolute inset-x-4 -bottom-4 h-12 bg-accent opacity-0 group-hover:opacity-20 blur-3xl transition-all duration-500 rounded-full" />
             <div className="relative glass-panel rounded-[40px] p-8 border border-white/70 dark:border-white/5 hover:border-accent/40 transition-all duration-500 transform hover:-translate-y-3 group-hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden">
-               <div className="absolute -right-8 -top-8 w-32 h-32 bg-accent/5 rounded-full blur-3xl group-hover:bg-accent/15 transition-all duration-500" />
-               
+              <div className="absolute -right-8 -top-8 w-32 h-32 bg-accent/5 rounded-full blur-3xl group-hover:bg-accent/15 transition-all duration-500" />
+
               <div className="flex justify-between items-start mb-8">
                 <div className="w-16 h-16 rounded-[24px] bg-slate-950 text-white flex items-center justify-center shadow-xl shadow-accent/20 group-hover:scale-110 transition-transform duration-500 dark:bg-accent">
                   <BookOpen size={32} strokeWidth={2.5} />
@@ -1542,7 +1663,7 @@ export const FinanceDiaryPage = () => {
 
               <div className="space-y-4">
                 <h3 className="text-2xl font-black leading-tight tracking-tight transition-colors group-hover:text-slate-900 dark:group-hover:text-accent">{diary.name}</h3>
-                
+
                 <div className="flex items-center gap-3">
                   <div className="flex -space-x-2">
                     {diary.members.slice(0, 3).map((m, i) => (
@@ -1573,7 +1694,7 @@ export const FinanceDiaryPage = () => {
           </div>
         ))}
 
-        <button 
+        <button
           onClick={() => setShowCreateModal(true)}
           className="group relative border-3 border-dashed border-slate-200 dark:border-white/5 rounded-[40px] p-8 flex flex-col items-center justify-center gap-6 hover:border-accent/40 hover:bg-accent/5 transition-all duration-500 min-h-[300px]"
         >
@@ -1605,7 +1726,7 @@ export const FinanceDiaryPage = () => {
               <div className="p-10 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
                 <div className="space-y-3">
                   <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 px-1">Diary Name</label>
-                  <input 
+                  <input
                     autoFocus
                     required
                     value={newDiaryName}
@@ -1626,7 +1747,7 @@ export const FinanceDiaryPage = () => {
                     {newDiaryMembers.map((member, i) => (
                       <div key={i} className="relative group">
                         <Users className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                        <input 
+                        <input
                           required
                           value={member}
                           onChange={(e) => handleMemberChange(i, e.target.value)}

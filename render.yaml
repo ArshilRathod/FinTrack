@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: fintrack
+    env: node
+    plan: free
+    buildCommand: npm install && npm run prisma:generate -w server && npm run build
+    startCommand: NODE_ENV=production npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATA_STORE
+        value: prisma
+      - key: HTTP_LOG_LEVEL
+        value: errors
+      - key: JWT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

@@ -22,7 +22,15 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then((m
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
 const WelcomePage = lazy(() => import('./pages/WelcomePage').then((module) => ({ default: module.WelcomePage })));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1
+    }
+  }
+});
 const pageFallback = (
   <div className="flex min-h-screen items-center justify-center bg-app px-6 text-sm font-medium text-slate-500 dark:text-slate-400">
     Loading FinTrack...

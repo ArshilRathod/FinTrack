@@ -1,6 +1,8 @@
 import { listExpenses, listLoans, listRecurringPayments } from '../store/dataStore.js';
 import { getDaysUntilDate } from '../utils/finance.js';
 
+const DEBUG_NOTIFICATIONS = process.env.DEBUG_NOTIFICATIONS === 'true';
+
 export const getNotifications = async (req, res) => {
   try {
     const notifications = [];
@@ -35,7 +37,9 @@ export const getNotifications = async (req, res) => {
     recurringPayments.forEach((payment) => {
       const dateField = payment.nextPaymentDate;
       const daysUntil = getDaysUntilDate(dateField);
-      console.log(`[Notifications] Recurring: ${payment.title}, nextPaymentDate: ${dateField}, daysUntil: ${daysUntil}`);
+      if (DEBUG_NOTIFICATIONS) {
+        console.log(`[Notifications] Recurring: ${payment.title}, nextPaymentDate: ${dateField}, daysUntil: ${daysUntil}`);
+      }
       if (daysUntil >= 0 && daysUntil <= 2) {
         let timeLabel = `in ${daysUntil} days`;
         if (daysUntil === 1) timeLabel = 'tomorrow';
@@ -56,7 +60,9 @@ export const getNotifications = async (req, res) => {
     allItems.forEach((item) => {
       const dateField = item.nextEmiDate;
       const daysUntil = getDaysUntilDate(dateField);
-      console.log(`[Notifications] Loan: ${item.loanName}, type: ${item.type}, nextEmiDate: ${dateField}, daysUntil: ${daysUntil}`);
+      if (DEBUG_NOTIFICATIONS) {
+        console.log(`[Notifications] Loan: ${item.loanName}, type: ${item.type}, nextEmiDate: ${dateField}, daysUntil: ${daysUntil}`);
+      }
       if (daysUntil >= 0 && daysUntil <= 2) {
         let title = 'Loan EMI Reminder';
         const amount = item.emiAmount || item.currentValue || item.loanAmount;
@@ -79,7 +85,9 @@ export const getNotifications = async (req, res) => {
       }
     });
 
-    console.log(`[Notifications] Total generated: ${notifications.length}`);
+    if (DEBUG_NOTIFICATIONS) {
+      console.log(`[Notifications] Total generated: ${notifications.length}`);
+    }
     return res.json({ notifications });
   } catch (error) {
     console.error('Error fetching notifications:', error);
